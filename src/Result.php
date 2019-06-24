@@ -1,22 +1,42 @@
 <?php
 namespace Erudition;
 
-use SebastianBergmann\Comparator\Factory;
-use SebastianBergmann\Comparator\ComparisonFailure;
+use Throwable;
 
-class ParallelCodePathResult
+class Result
 {
     /** @var  mixed */
     protected $value;
 
-    /** @var  int */
+    /** @var  float */
     protected $duration;
 
-    /** @var  null|\Exception */
+    /** @var  null|Throwable */
     protected $exception;
 
-    public function __construct($value, $duration, $exception = null)
+    /** @var string */
+    private $experimentName;
+
+    /** @var string */
+    private $trialName;
+
+    /**
+     * Result constructor.
+     * @param string $experimentName
+     * @param string $trialName
+     * @param $value
+     * @param float $duration
+     * @param Throwable $exception
+     */
+    public function __construct(
+        string $experimentName,
+        string $trialName,
+        $value,
+        float $duration,
+        Throwable $exception = null)
     {
+        $this->experimentName = $experimentName;
+        $this->trialName = $trialName;
         $this->value = $value;
         $this->duration = $duration;
         $this->exception = $exception;
@@ -24,7 +44,7 @@ class ParallelCodePathResult
 
     /**
      * Returns the exception if set, otherwise the value.
-     * @return \Exception|mixed|null
+     * @return Throwable|mixed|null
      */
     public function getResult()
     {
@@ -52,7 +72,7 @@ class ParallelCodePathResult
     }
 
     /**
-     * @return \Exception|null
+     * @return Throwable|null
      */
     public function getException()
     {
@@ -64,6 +84,6 @@ class ParallelCodePathResult
      */
     public function isException()
     {
-        return ($this->exception instanceof \Exception);
+        return ($this->exception instanceof Throwable);
     }
 }

@@ -1,8 +1,10 @@
 <?php
 namespace Erudition;
 
+use RuntimeException;
 use SebastianBergmann\Comparator\Factory;
 use SebastianBergmann\Comparator\ComparisonFailure;
+use Throwable;
 
 
 class ParallelCodePath
@@ -19,7 +21,8 @@ class ParallelCodePath
     /**
      * @param $experimentName
      * @param $callable
-     * @return ParallelCodePathResult
+     * @return Result
+     * @throws Throwable
      */
     public static function execute($experimentName, $callable)
     {
@@ -28,7 +31,12 @@ class ParallelCodePath
         return $instance->run($experimentName);
     }
 
-    public function control($callable, $params = null)
+    /**
+     * @param callable $callable
+     * @param null $params
+     * @return $this
+     */
+    public function control(callable $callable, $params = null)
     {
         $this->control       = $callable;
         $this->controlParams = $params;
@@ -36,7 +44,12 @@ class ParallelCodePath
         return $this;
     }
 
-    public function candidate($callable, $params = null)
+    /**
+     * @param callable $callable
+     * @param null $params
+     * @return $this
+     */
+    public function candidate(callable $callable, $params = null)
     {
         $this->candidate       = $callable;
         $this->candidateParams = $params;
@@ -44,7 +57,11 @@ class ParallelCodePath
         return $this;
     }
 
-    public function comparator($callable)
+    /**
+     * @param callable $callable
+     * @return $this
+     */
+    public function comparator(callable $callable)
     {
         $this->comparator = $callable;
         return $this;
@@ -55,22 +72,27 @@ class ParallelCodePath
      * Note: Throws a runtime exception if either codepath is missing.
      *
      * @param string $experimentName
-     * @return ParallelCodePathResult
-     * @throws \Exception
+     * @return Result
+     * @throws Throwable
      */
     public function run($experimentName)
     {
         if (empty($this->control) || empty($this->candidate)) {
-            throw new \RuntimeException('Missing control or candidate callable');
+            throw new RuntimeException('Missing control or candidate callable');
         }
 
-        $controlResult   = $this->observeCallable($this->control, $this->controlParams);
-        $candidateResult = $this->observeCallable($this->candidate, $this->candidateParams);
+        // randomise order in which the two paths are called.
+        if (random_int(0, 1) === 1) {
+            $controlResult   = $this->observeCallable($experimentName, 'control', $this->control, $this->controlParams);
+            $candidateResult = $this->observeCallable($experimentName, 'candidate', $this->candidate, $this->candidateParams);
+        } else {
+            $candidateResult = $this->observeCallable($experimentName, 'candidate', $this->candidate, $this->candidateParams);
+            $controlResult   = $this->observeCallable($experimentName, 'control', $this->control, $this->controlParams);
+        }
 
         $comparisonResult = $this->compare($controlResult->getResult(), $candidateResult->getResult());
-        if (!$comparisonResult) {
-            $this->logResults($controlResult, $comparisonResult);
-        }
+
+        $this->logResults($controlResult, $comparisonResult);
         
         if ($controlResult->isException()) {
             throw $controlResult->getException();
@@ -80,11 +102,13 @@ class ParallelCodePath
     }
 
     /**
+     * @param $experimentName
+     * @param $trial
      * @param  $callable
-     * @param  array $params
-     * @return ParallelCodePathResult
+     * @param array $params
+     * @return Result
      */
-    protected function observeCallable(&$callable, $params)
+    protected function observeCallable($experimentName, $trial, &$callable, $params)
     {
         $result = $exception = null;
 
@@ -96,12 +120,12 @@ class ParallelCodePath
         }
         $duration = microtime(true) - $start;
 
-        return new ParallelCodePathResult($result, $duration, $exception);
+        return new Result($experimentName, $trial, $result, $duration, $exception);
     }
 
     /**
-     * @param  ParallelCodePathResult $a
-     * @param  ParallelCodePathResult $b
+     * @param  Result $a
+     * @param  Result $b
      * @return bool
      */
     protected function compare($a, $b)
@@ -124,14 +148,16 @@ class ParallelCodePath
      */
     protected function defaultCompare($a, $b)
     {
-        $factory = new Factory;
-        $comparator = $factory->getComparatorFor($a, $b);
-
-        try {
-            return $comparator->assertEquals($a, $b);
-        }  catch (ComparisonFailure $failure) {
-            return false;
-        }
+        // TODO(philipmuir): move compare functions to own interface and have phpunit comparisions as an option
+//        $factory = new Factory;
+//        $comparator = $factory->getComparatorFor($a, $b);
+//
+//        try {
+//            return $comparator->assertEquals($a, $b);
+//        }  catch (ComparisonFailure $failure) {
+//            return false;
+//        }
+        return $a == $b;
     }
 
     protected function logResults($controlResult, $candidateResult)
