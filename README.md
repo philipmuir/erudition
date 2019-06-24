@@ -4,7 +4,7 @@ Some short sentence describing what this esoterically named lib does.
 
 ## Goals
 
-- Wrap two read paths and measure execution time.
+- Wrap two read paths and measure corectness and execution time.
 - Integrated feature flag to always use control (existing code).
 - Automatic counts and timings collection.
 	- `erudition.experiment.<name>`
