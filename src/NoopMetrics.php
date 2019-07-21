@@ -9,7 +9,7 @@ class NoopMetrics implements MetricsCollector
     /**
      * @param ExperimentResults $results
      */
-    public function collectExperimentMetrics(ExperimentResults $results)
+    public function collectExperimentTelemetry(ExperimentResults $results)
     {
     }
 }

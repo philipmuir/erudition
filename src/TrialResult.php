@@ -26,7 +26,7 @@ class TrialResult
      *
      * @param string $experimentName
      * @param string $trialName
-     * @param $value
+     * @param mixed $value
      * @param float $durationSec
      * @param Throwable $exception
      */

@@ -9,33 +9,29 @@ namespace Erudition;
  */
 class ExperimentResults
 {
-    /**
-     * @var bool
-     */
+    /** @var bool */
     private $success;
-    /**
-     * @var TrialResult
-     */
+
+    /** @var TrialResult */
     private $control;
-    /**
-     * @var TrialResult
-     */
-    private $trial;
+
+    /** @var TrialResult */
+    private $candidate;
 
     /**
      * ExperimentResults constructor.
      * @param bool $success
      * @param TrialResult $control
-     * @param TrialResult $trial
+     * @param TrialResult $candidate
      */
     public function __construct(
         bool $success,
         TrialResult $control,
-        TrialResult $trial
+        TrialResult $candidate
     ) {
         $this->success = $success;
         $this->control = $control;
-        $this->trial = $trial;
+        $this->candidate = $candidate;
     }
 
     public function getName(): string
@@ -62,9 +58,9 @@ class ExperimentResults
     /**
      * @return TrialResult
      */
-    public function getTrial(): TrialResult
+    public function getCandidate(): TrialResult
     {
-        return $this->trial;
+        return $this->candidate;
     }
 
     /**

@@ -44,16 +44,17 @@ class Experiment
     /**
      * Cunt
      *
-     * @param string   $experimentName Loggable experiment name
+     * @param string $experimentName Loggable experiment name
      * @param callable $callable
      *
-     * @return TrialResult
+     * @param MetricsCollector|null $m
+     * @return mixed
      * @throws Throwable
      */
-    public static function execute(string $experimentName, callable $callable)
+    public static function execute(string $experimentName, callable $callable, MetricsCollector $m = null)
     {
-        $instance = new self($experimentName);
-        call_user_func_array($callable, array($instance));
+        $instance = new self($experimentName, null, $m);
+        call_user_func_array($callable, [$instance]);
         return $instance->run();
     }
 
@@ -101,8 +102,7 @@ class Experiment
 
         // compare & log experiment run
         $this->experimentResults = $this->compare($controlResult, $candidateResult);
-
-        $this->metricsCollector->collectExperimentMetrics($this->experimentResults);
+        $this->metricsCollector->collectExperimentTelemetry($this->experimentResults);
 
         // return control result or throw exception.
         if ($controlResult->isException()) {

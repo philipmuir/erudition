@@ -4,10 +4,13 @@ Some short sentence describing what this esoterically named lib does.
 
 ## Goals
 
-- Wrap two read paths and measure corectness and execution time.
-- Integrated feature flag to always use control (existing code).
+- Wrap two read paths and measure fitness of the new function (return values / execution time).
+- Integrated feature flag to always use control (maybe).
 - Automatic counts and timings collection.
-	- `erudition.experiment.<name>`
+    - count `erudition.experiment.<name>.run`
+	- count `erudition.experiment.<name>.success|failure`
+	- timing `erudition.experiment.<name>.control` 
+	- timing `erudition.experiment.<name>.candidate`
 
 
 ## Usages

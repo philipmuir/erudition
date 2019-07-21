@@ -9,5 +9,5 @@ namespace Erudition;
  */
 interface MetricsCollector
 {
-    public function collectExperimentMetrics(ExperimentResults $results);
+    public function collectExperimentTelemetry(ExperimentResults $results);
 }
