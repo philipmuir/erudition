@@ -35,42 +35,57 @@ class Experiment
     /** @var callable|null  */
     protected $comparator = null;
 
+    /** @var ExperimentResults|null */
+    private $experimentResults = null;
+
+    /** @var MetricsCollector */
+    private $metricsCollector;
+
     /**
      * Cunt
      *
      * @param string   $experimentName Loggable experiment name
      * @param callable $callable
      *
-     * @return Result
+     * @return TrialResult
      * @throws Throwable
      */
     public static function execute(string $experimentName, callable $callable)
     {
         $instance = new self($experimentName);
         call_user_func_array($callable, array($instance));
-        return $instance->run($experimentName);
+        return $instance->run();
     }
 
     /**
      * Experiment constructor.
      * @param string $experimentName
      * @param callable $comparator
+     * @param MetricsCollector|null $metricsCollector
      */
-    public function __construct(string $experimentName, callable $comparator = null)
-    {
-        $this->experimentName = $experimentName;
-        $this->comparator     = $comparator;
+    public function __construct(
+        string $experimentName,
+        callable $comparator = null,
+        MetricsCollector $metricsCollector = null
+    ) {
+        $this->experimentName   = $experimentName;
+        $this->comparator       = $comparator;
+        $this->metricsCollector = $metricsCollector ?? new NoopMetrics();
     }
 
     /**
      * Runs the control and candidate code, returning the control results.
      * Note: Throws a runtime exception if either codepath is missing.
      *
-     * @return Result
+     * @return mixed
      * @throws Throwable
      */
     public function run()
     {
+        if ($this->experimentResults) {
+            throw new RuntimeException('Experiment has already been run');
+        }
+
         if (!is_callable($this->control) || !is_callable($this->candidate)) {
             throw new RuntimeException('Missing control or candidate callable');
         }
@@ -84,8 +99,12 @@ class Experiment
             $controlResult   = $this->runTrial('control', $this->control, $this->controlParams);
         }
 
-        $this->logResults($controlResult, $candidateResult);
+        // compare & log experiment run
+        $this->experimentResults = $this->compare($controlResult, $candidateResult);
 
+        $this->metricsCollector->collectExperimentMetrics($this->experimentResults);
+
+        // return control result or throw exception.
         if ($controlResult->isException()) {
             throw $controlResult->getException();
         }
@@ -97,16 +116,20 @@ class Experiment
      * @param string $trialName
      * @param callable $callable
      * @param array $params
-     * @return Result
+     * @return TrialResult
      */
-    private function runTrial(string $trialName, callable $callable, array $params): Result
+    private function runTrial(string $trialName, callable $callable, array $params): TrialResult
     {
-        return $this->observeCallable(
+        $r = $this->observeCallable(
             $this->experimentName,
             $trialName,
             $callable,
             $params
         );
+
+        syslog(LOG_WARNING, $r->getExperimentName());
+
+        return $r;
     }
 
     /**
@@ -117,9 +140,9 @@ class Experiment
      * @param callable $callable       a
      * @param array    $params         a
      *
-     * @return Result
+     * @return TrialResult
      */
-    protected function observeCallable($experimentName, $trial, &$callable, $params)
+    protected function observeCallable(string $experimentName, string $trial, callable &$callable, array $params)
     {
         $result = $exception = null;
 
@@ -131,34 +154,34 @@ class Experiment
         }
         $duration = microtime(true) - $start;
 
-        return new Result($experimentName, $trial, $result, $duration, $exception);
+        return new TrialResult($experimentName, $trial, $result, $duration, $exception);
     }
 
     /**
      * A
      *
-     * @param Result $a A
-     * @param Result $b B
+     * @param TrialResult $control
+     * @param TrialResult $trial
      *
-     * @return bool
+     * @return ExperimentResults
      */
-    protected function compare($a, $b)
+    protected function compare(TrialResult $control, TrialResult $trial): ExperimentResults
     {
         if (is_callable($this->comparator)) {
-            return call_user_func_array($this->comparator, array($a->getResult(), $b->getResult()));
+            return call_user_func_array($this->comparator, [$control->getResult(), $trial->getResult()]);
         }
 
-        return $this->defaultCompare($a->getResult(), $b->getResult());
+        return $this->defaultCompare($control, $trial);
     }
 
     /**
      * Defaults compare function using assertEquals from PHPUnit.
      *
-     * @param Result $control
-     * @param Result $trial
+     * @param TrialResult $control
+     * @param TrialResult $trial
      * @return bool
      */
-    protected function defaultCompare(Result $control, Result $trial)
+    protected function defaultCompare(TrialResult $control, TrialResult $trial): ExperimentResults
     {
         // TODO(philipmuir): move compare functions to own interface and have phpunit comparisons as an option
         //        $factory = new Factory;
@@ -169,36 +192,22 @@ class Experiment
         //        }  catch (ComparisonFailure $failure) {
         //            return false;
         //        }
-        return $control->getResult() === $trial->getResult();
-    }
-
-    /**
-     * A
-     *
-     * @param Result $controlResult   aaa
-     * @param Result $candidateResult aaa
-     *
-     * @return null
-     */
-    protected function logResults($controlResult, $candidateResult)
-    {
-        //todo: syslog errors/StatsD counts
-        if (! $this->compare($controlResult->getResult(), $candidateResult->getResult())) {
-            // die
-        }
-
-        return;
+        return new ExperimentResults(
+            $control->getResult() === $trial->getResult(),
+            $control,
+            $trial
+        );
     }
 
     /**
      * A
      *
      * @param callable $callable Call me
-     * @param null     $params   Params
+     * @param array $params Params
      *
      * @return $this
      */
-    public function control(callable $callable, $params = null)
+    public function control(callable $callable, $params = [])
     {
         $this->control = $callable;
         $this->controlParams = $params;
@@ -210,11 +219,11 @@ class Experiment
      * B
      *
      * @param callable $callable callable
-     * @param null     $params   function params
+     * @param array $params function params
      *
      * @return $this
      */
-    public function candidate(callable $callable, $params = null)
+    public function candidate(callable $callable, $params = [])
     {
         $this->candidate = $callable;
         $this->candidateParams = $params;

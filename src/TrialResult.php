@@ -4,7 +4,7 @@ namespace Erudition;
 
 use Throwable;
 
-class Result
+class TrialResult
 {
     /** @var mixed */
     protected $value;
@@ -42,6 +42,22 @@ class Result
         $this->value = $value;
         $this->duration = $durationSec;
         $this->exception = $exception;
+    }
+
+    /**
+     * @return string
+     */
+    public function getExperimentName(): string
+    {
+        return $this->experimentName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTrialName(): string
+    {
+        return $this->trialName;
     }
 
     /**
