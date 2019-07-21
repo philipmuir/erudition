@@ -1,0 +1,30 @@
+{
+    "name": "philipmuir/erudition",
+    "description": "TBD",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Phil",
+            "email": "me@pm.id.au"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Erudition\\": "src/",
+            "Erudition\\Test\\": "test/"
+        }
+    },
+    "require": {
+
+    },
+    "scripts": {
+        "lint": "./vendor/bin/phpcs --standard=phpcs.xml src"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-master",
+        "phpunit/phpunit": "^6.5",
+        "phpspec/prophecy": "^1.8",
+        "squizlabs/php_codesniffer": "3.*"
+    }
+}
