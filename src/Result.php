@@ -1,17 +1,18 @@
 <?php
+
 namespace Erudition;
 
 use Throwable;
 
 class Result
 {
-    /** @var  mixed */
+    /** @var mixed */
     protected $value;
 
-    /** @var  float */
+    /** @var float */
     protected $duration;
 
-    /** @var  null|Throwable */
+    /** @var null|Throwable */
     protected $exception;
 
     /** @var string */
@@ -22,28 +23,30 @@ class Result
 
     /**
      * Result constructor.
+     *
      * @param string $experimentName
      * @param string $trialName
      * @param $value
-     * @param float $duration
+     * @param float $durationSec
      * @param Throwable $exception
      */
     public function __construct(
         string $experimentName,
         string $trialName,
         $value,
-        float $duration,
-        Throwable $exception = null)
-    {
+        float $durationSec,
+        Throwable $exception = null
+    ) {
         $this->experimentName = $experimentName;
         $this->trialName = $trialName;
         $this->value = $value;
-        $this->duration = $duration;
+        $this->duration = $durationSec;
         $this->exception = $exception;
     }
 
     /**
      * Returns the exception if set, otherwise the value.
+     *
      * @return Throwable|mixed|null
      */
     public function getResult()
@@ -53,6 +56,22 @@ class Result
         }
 
         return $this->getValue();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isException()
+    {
+        return ($this->exception instanceof Throwable);
+    }
+
+    /**
+     * @return Throwable|null
+     */
+    public function getException()
+    {
+        return $this->exception;
     }
 
     /**
@@ -69,21 +88,5 @@ class Result
     public function getDuration()
     {
         return $this->duration;
-    }
-
-    /**
-     * @return Throwable|null
-     */
-    public function getException()
-    {
-        return $this->exception;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isException()
-    {
-        return ($this->exception instanceof Throwable);
     }
 }

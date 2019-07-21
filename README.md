@@ -14,38 +14,37 @@ Some short sentence describing what this esoterically named lib does.
 
 Where using a new static method on same class:
 ```php
-$controlResult = ParallelCodePath::execute('experiment.name', function(ParallelCodePath $instance) {
-    $instance->control(['\QDateTime', 'getTimestamp']);
-    $instance->candidate(['\QDateTime', 'someNewAwesomeGetTimestamp']);
+$controlResult = Experiment::execute('experiment.name', function(Experiment $exp) {
+    $exp->control(array('\QDateTime', 'getTimestamp'));
+    $exp->candidate(array('\QDateTime', 'someNewAwesomeGetTimestamp'));
 
-    $instance->comparator(function($resultA, $resultB) {
+    $exp->comparator(function($resultA, $resultB) {
         return $resultA === $resultB;
     });
 });
 ```
 
-Where replacing a function call with a new method call, or similar:
+Where replacing a function call with a new method call or similar:
 ```php
-// old
+// existing
 _sp('somg language string');
 
 // new
-$someValue = 'some value';
 $lm = $pimple[LanguageManager::class];
-$lm->get('lang.string.name', ['replacement' => $someValue]);
+$lm->get('lang.string.name');
 
-// ParallelCodePath controlled:
-$result = ParallelCodePath::execute('experiment.name', function(ParallelCodePath $instance) use($someValue) {
-    $instance->control(
+// Experiment controlled:
+$result = Experiment::execute('experiment.name', function(Experiment $exp) use($pimple) {
+    $exp->control(
         '_sp',
         ['somg language string']
     );
-    $instance->candidate(
+    $exp->candidate(
         [$pimple[LanguageManager::class], 'get'],
-        ['replacement' => $someValue]
+        ['somg language string']
     );
 
-    $instance->comparator(function($resultA, $resultB) {
+    $exp->comparator(function($resultA, $resultB) {
         return $resultA === $resultB;
     });
 });
@@ -53,16 +52,12 @@ $result = ParallelCodePath::execute('experiment.name', function(ParallelCodePath
 
 Where replacing a method call on with a new method on an instance:
 ```php
-$this->createdAt = new \QDateTime();
+$object = new \QDateTime();
 
-$object = $this->createdAt;
-$result = ParallelCodePath::execute('experiment.name', function(ParallelCodePath $instance) use($object) {
-    $instance->control([$this->createdAt, 'getTimestamp']);
-    $instance->candidate([$this->createdAt, 'awesomeGetTimestamp']);
+$result = Experiment::execute('experiment.name', function(Experiment $exp) use($object) {
+    $exp->control([$this->createdAt, 'getTimestamp']);
 
-    $instance->comparator(function($resultA, $resultB) {
-        return $resultA == $resultB;
-    });
+    $exp->candidate([$this->createdAt, 'awesomeGetTimestamp']);
 });
 ```
 
@@ -70,14 +65,14 @@ Instantiating an instance of `ParallelCodePath`:
 ```php
 $instance = new \QDateTime();
 
-$test = new ParallelCodePath('test', null);
-$test->control([$instance, 'getTimestamp']);
-$test->candidate([$instance, 'awesomeGetTimestamp']);
+$exp = new Experiment('test', null);
+$exp->control([$instance, 'getTimestamp']);
+$exp->candidate([$instance, 'awesomeGetTimestamp']);
 
 // optional comparator, uses phpunits compare library by default.
-$test->comparator(function($resultA, $resultB) {
+$exp->comparator(function($resultA, $resultB) {
     return $resultA === $resultB;
 });
-$result = $test->run('test');
+$result = $exp->run();
 ```
 
