@@ -1,0 +1,7 @@
+includes:
+	- vendor/jangregor/phpstan-prophecy/src/extension.neon
+parameters:
+	ignoreErrors:
+		-
+			message: '#Result of || is always false.#'
+			path: %currentWorkingDirectory%/src/Experiment.php

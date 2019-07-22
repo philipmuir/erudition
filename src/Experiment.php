@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Wtf
  */
@@ -105,7 +105,7 @@ class Experiment
         $this->metricsCollector->collectExperimentTelemetry($this->experimentResults);
 
         // return control result or throw exception.
-        if ($controlResult->isException()) {
+        if ($controlResult->isException() && $controlResult->getException() !== null) {
             throw $controlResult->getException();
         }
 
@@ -179,7 +179,7 @@ class Experiment
      *
      * @param TrialResult $control
      * @param TrialResult $trial
-     * @return bool
+     * @return ExperimentResults
      */
     protected function defaultCompare(TrialResult $control, TrialResult $trial): ExperimentResults
     {

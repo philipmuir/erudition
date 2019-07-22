@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Erudition;
 
@@ -12,7 +12,7 @@ class TrialResult
     /** @var float */
     protected $duration;
 
-    /** @var null|Throwable */
+    /** @var Throwable|null */
     protected $exception;
 
     /** @var string */
@@ -99,7 +99,7 @@ class TrialResult
     }
 
     /**
-     * @return int
+     * @return float
      */
     public function getDuration()
     {

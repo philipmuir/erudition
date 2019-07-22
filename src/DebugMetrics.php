@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Erudition;
 
@@ -40,6 +40,6 @@ class DebugMetrics implements MetricsCollector
      */
     private function normaliseEperimentName(string $name): string
     {
-        return preg_replace("/[\W_]+/", '', $name);
+        return (string) preg_replace("/[\W_]+/", '', $name);
     }
 }

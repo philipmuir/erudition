@@ -11,6 +11,7 @@
     ],
     "require": {},
     "require-dev": {
+        "jangregor/phpstan-prophecy": "^0.4.1",
         "phpspec/prophecy": "^1.8",
         "phpunit/phpunit": "^6.5",
         "roave/security-advisories": "dev-master",
@@ -23,6 +24,11 @@
         }
     },
     "scripts": {
-        "lint": "./vendor/bin/phpcs --standard=phpcs.xml src"
+        "lint": [
+            "@phpcs",
+            "@phpstan"
+        ],
+        "phpcs": "phpcs --standard=phpcs.xml src test",
+        "phpstan": "phpstan analyse -l 7 -c phpstan.neon src test"
     }
 }
