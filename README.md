@@ -1,6 +1,6 @@
 # Erudition
 
-Some short sentence describing what this esoterically named lib does.
+A PHP library for carefully refactoring critical code paths.
 
 ## Goals
 
