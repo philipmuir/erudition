@@ -42,8 +42,6 @@ class Experiment
     private $metricsCollector;
 
     /**
-     * Cunt
-     *
      * @param string $experimentName Loggable experiment name
      * @param callable $callable
      *
